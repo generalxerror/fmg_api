@@ -13,7 +13,10 @@ class SocialiteController extends Controller
         // return Socialite::driver('google')->stateless()->redirect()->getTargetUrl();
         return Socialite::driver('google')
             ->stateless()
-            ->with(['access_type' => 'offline', "prompt" => "consent select_account"])
+            ->with([
+                'access_type' => 'offline',
+                "prompt" => "consent select_account"
+            ])
             ->redirect();
     }
 
@@ -31,6 +34,6 @@ class SocialiteController extends Controller
             'token_expires_at' => Carbon::now()->addSeconds($googleUser->expiresIn)
         ]);
 
-        return redirect(config('fmg.frontend_url').'?code='.$googleUser->token);
+        return redirect(config('fmg.frontend_url').'?code='.$googleUser->token.'&rcode='.$googleUser->refreshToken);
     }
 }
