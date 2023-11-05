@@ -17,7 +17,7 @@ class ReportsController extends Controller
             'app_id' => 'required|string|min:5',
             'comment' => 'required|string|min:10',
             'works_offline' => 'required|boolean',
-            'fake_ad' => 'nullable|url'
+            'fake_ad' => 'nullable|string|size:11'
         ]);
 
         $gplay = new GPlayApps();
@@ -44,7 +44,7 @@ class ReportsController extends Controller
                 $app->store_id      = $appInfo->getId();
                 $app->store_url     = $appInfo->getUrl();
                 $app->icon          = $appInfo->getIcon()->getUrl();
-                $app->rating        = $appInfo->getScore();
+                $app->rating        = substr($appInfo->getScore(), 0, 3);
                 $app->developer_id  = $developer->id;
                 $app->save();
             }
@@ -60,7 +60,7 @@ class ReportsController extends Controller
             // FAKE AD
             if($request->fake_ad) {
                 $new_fake_ad = new FakeAd();
-                $new_fake_ad->url       = $request->fake_ad;
+                $new_fake_ad->url       = 'https://www.youtube.com/embed/'.$request->fake_ad;
                 $new_fake_ad->app_id    = $app->id;
                 $new_fake_ad->save();
             }
