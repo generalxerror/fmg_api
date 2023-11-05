@@ -32,7 +32,7 @@ class ScraperController extends Controller
                 'store_id'      => $appInfo->getId(),
                 'store_url'     => $appInfo->getUrl(),
                 'icon'          => $appInfo->getIcon()->getUrl(),
-                'rating'        => $appInfo->getScore(),
+                'rating'        => substr($appInfo->getScore(), 0, 3),
                 'dev_name'      => $appInfo->getDeveloperName(),
                 'dev_store_url' => $appInfo->getDeveloper()->getUrl()
             ]);

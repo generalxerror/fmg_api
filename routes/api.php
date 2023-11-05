@@ -1,10 +1,12 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\DevsController;
+use App\Http\Controllers\MiscController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ScraperController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\SocialiteController;
 
 /*
@@ -33,9 +35,18 @@ Route::prefix('store')->middleware(['loggedin'])->group(function() {
 });
 
 Route::prefix('apps')->group(function() {
+    Route::get('{id}', [AppsController::class, 'show']);
     Route::post('search', [AppsController::class, 'search']);
 });
 
 Route::prefix('reports')->middleware(['loggedin'])->group(function() {
     Route::post('create', [ReportsController::class, 'store']);
+});
+
+Route::prefix('misc')->group(function() {
+    Route::get('home', [MiscController::class, 'getMainPageItems']);
+});
+
+Route::prefix('devs')->group(function() {
+    Route::get('{id}', [DevsController::class, 'show']);
 });
