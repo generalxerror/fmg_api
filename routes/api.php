@@ -5,6 +5,7 @@ use App\Http\Controllers\AppsController;
 use App\Http\Controllers\DevsController;
 use App\Http\Controllers\MiscController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SlackController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ScraperController;
 use App\Http\Controllers\SocialiteController;
@@ -40,6 +41,7 @@ Route::prefix('apps')->group(function() {
 });
 
 Route::prefix('reports')->middleware(['loggedin'])->group(function() {
+    Route::get('mine', [ReportsController::class, 'mine']);
     Route::post('create', [ReportsController::class, 'store']);
 });
 
@@ -49,4 +51,8 @@ Route::prefix('misc')->group(function() {
 
 Route::prefix('devs')->group(function() {
     Route::get('{id}', [DevsController::class, 'show']);
+});
+
+Route::prefix('slack')->middleware(['slackrequest'])->group(function() {
+    Route::post('interaction', [SlackController::class, 'interact']);
 });

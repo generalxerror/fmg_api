@@ -25,11 +25,39 @@ class AppsController extends Controller
             ->where('app_id', $store_app->id)
             ->where('published', 1)
             ->orderBy('created_at', 'DESC')
-            ->get();
+            ->paginate(10);
 
         return response()->json([
             "app" => $store_app,
             "reports" => $reports
+        ]);
+    }
+
+    public function search(Request $request) {
+        $request->validate([
+            'search_query' => 'required|string|min:3'
+        ]);
+
+        $search_result = StoreApp::select('id', 'title', 'rating', 'developer_id', 'icon')
+            ->where('title', 'like', '%'.$request->search_query.'%')
+            ->orWhere('store_id', 'like', '%'.$request->search_query.'%')
+            ->with([
+                'developer' => function($query) {
+                    $query->select('id', 'name');
+                }
+            ])
+            ->withCount([
+                'reports' => function($query) {
+                    $query->where('published', 1);
+                }
+            ])
+            ->orderBy('reports_count', 'DESC')
+            ->having('reports_count', '>', 0)
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            "search_result" => $search_result
         ]);
     }
 }

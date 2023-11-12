@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\SlackRequest;
 use App\Http\Middleware\EnsureLoggedIn;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -65,6 +66,7 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'loggedin' => EnsureLoggedIn::class
+        'loggedin' => EnsureLoggedIn::class,
+        'slackrequest' => SlackRequest::class
     ];
 }

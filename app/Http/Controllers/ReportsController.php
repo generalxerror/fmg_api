@@ -8,9 +8,24 @@ use App\Models\StoreApp;
 use App\Models\Developer;
 use Nelexa\GPlay\GPlayApps;
 use Illuminate\Http\Request;
+use Spatie\SlackAlerts\Facades\SlackAlert;
 
 class ReportsController extends Controller
 {
+    public function mine(Request $request) {
+        $my_reports = Report::select('id', 'comment', 'works_offline', 'published', 'app_id', 'created_at')
+            ->where('author_id', $request->user()->id)
+            ->with('storeApp', function($query) {
+                $query->select('id', 'title');
+            })
+            ->orderBy('created_at', 'DESC')
+            ->paginate(10);
+
+        return response()->json([
+            'my_reports' => $my_reports
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -23,6 +38,19 @@ class ReportsController extends Controller
         $gplay = new GPlayApps();
         try {
             $appInfo = $gplay->getAppInfo($request->app_id);
+
+            $existing_report = StoreApp::select('reports.published')
+                ->join('reports', 'reports.app_id', '=', 'apps.id')
+                ->where('apps.store_id', $request->app_id)
+                ->where('reports.author_id', $request->user()->id)
+                ->whereIn('reports.published', [1, 0])
+                ->first();
+
+            if($existing_report) {
+                return response()->json([
+                    'error_msg' => 'You already reported this app.'
+                ], 422);
+            }
 
             // DEVELOPER
             $developer = Developer::where('store_id', $appInfo->getDeveloper()->getId())->first();
@@ -58,12 +86,15 @@ class ReportsController extends Controller
             $new_report->save();
 
             // FAKE AD
+            $new_fake_ad = null;
             if($request->fake_ad) {
                 $new_fake_ad = new FakeAd();
                 $new_fake_ad->url       = 'https://www.youtube.com/embed/'.$request->fake_ad;
                 $new_fake_ad->app_id    = $app->id;
                 $new_fake_ad->save();
             }
+
+            $this->sendSlackReportModeration($new_report, $app, $new_fake_ad);
 
             return response()->json([
                 'message' => 'Thank you! Your report is in review'
@@ -74,5 +105,67 @@ class ReportsController extends Controller
                 'error_msg' => 'Something went wrong. Try again later.'
             ], 404);
         }
+    }
+
+    public function sendSlackReportModeration(Report $report, StoreApp $app, $fake_ad)
+    {
+        SlackAlert::blocks([
+            [
+                "type" => "section",
+                "text" => [
+                    "type" => "mrkdwn",
+                    "text" => "*New Report Added*"
+                ]
+            ],
+            [
+                "type" => "section",
+                "fields" => [
+                    [
+                        "type" => "mrkdwn",
+                        "text" => "*APP:*\n*<".$app->store_url."|".$app->title.">*"
+                    ],
+                    [
+                        "type" => "mrkdwn",
+                        "text" => "*Works Offline:*\n".($report->works_offline ? 'Yes' : 'No')
+                    ],
+                    [
+                        "type" => "mrkdwn",
+                        "text" => "*Fake Ad:*\n".($fake_ad ? "*<".$fake_ad->url."|".$fake_ad->url.">*" : '-')
+                    ]
+                ]
+            ],
+            [
+                "type" => "section",
+                "text" => [
+                    "type" => "mrkdwn",
+                    "text" => "*Comment:*\n".$report->comment
+                ]
+            ],
+            [
+                "type" => "actions",
+                "elements" => [
+                    [
+                        "type" => "button",
+                        "text" => [
+                            "type" => "plain_text",
+                            "emoji" => true,
+                            "text" => "Publish"
+                        ],
+                        "style" => "primary",
+                        "value" => $report->id."_approved"
+                    ],
+                    [
+                        "type" => "button",
+                        "text" => [
+                            "type" => "plain_text",
+                            "emoji" => true,
+                            "text" => "Reject"
+                        ],
+                        "style" => "danger",
+                        "value" => $report->id."_rejected"
+                    ]
+                ]
+            ]
+        ]);
     }
 }
