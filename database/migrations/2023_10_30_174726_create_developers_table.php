@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('store_id')->unique();
             $table->text('store_url');
-            $table->text('website');
+            $table->text('website')->nullable();
             $table->string('email');
             $table->timestamps();
         });
