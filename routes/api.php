@@ -56,3 +56,7 @@ Route::prefix('devs')->group(function() {
 Route::prefix('slack')->middleware(['slackrequest'])->group(function() {
     Route::post('interaction', [SlackController::class, 'interact']);
 });
+
+Route::prefix('extension')->group(function() {
+    Route::post('search', [AppsController::class, 'extensionSearch']);
+});

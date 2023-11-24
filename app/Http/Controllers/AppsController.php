@@ -60,4 +60,25 @@ class AppsController extends Controller
             "search_result" => $search_result
         ]);
     }
+
+    public function extensionSearch(Request $request) {
+        $request->validate([
+            'search_query' => 'required|string|min:3'
+        ]);
+
+        $search_result = StoreApp::select('id', 'title')
+            ->where('store_id', '=', $request->search_query)
+            ->withCount([
+                'reports' => function($query) {
+                    $query->where('published', 1);
+                }
+            ])
+            ->orderBy('reports_count', 'DESC')
+            ->having('reports_count', '>', 0)
+            ->first();
+
+        return response()->json([
+            "search_result" => $search_result
+        ]);
+    }
 }
